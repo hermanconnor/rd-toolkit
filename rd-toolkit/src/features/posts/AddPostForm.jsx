@@ -1,15 +1,17 @@
 import { useState } from 'react';
-import { useDispatch } from 'react-redux';
-import { nanoid } from '@reduxjs/toolkit';
+import { useDispatch, useSelector } from 'react-redux';
 
 import { addPost } from './postsSlice';
+import { selectAllUsers } from '../users/usersSlice';
 
 const AddPostForm = () => {
+  const [userId, setUserId] = useState('');
   const [formData, setFormData] = useState({
     title: '',
     content: '',
   });
 
+  const users = useSelector(selectAllUsers);
   const dispatch = useDispatch();
 
   const { title, content } = formData;
@@ -25,17 +27,21 @@ const AddPostForm = () => {
     e.preventDefault();
 
     if (title && content) {
-      dispatch(
-        addPost({
-          id: nanoid(),
-          title,
-          content,
-        }),
-      );
+      dispatch(addPost(title, content, userId));
     }
 
     setFormData({ title: '', content: '' });
   };
+
+  const handleAuthorChange = (e) => setUserId(e.target.value);
+
+  const canSave = Boolean(title) && Boolean(content) && Boolean(userId);
+
+  const usersOptions = users.map((user) => (
+    <option key={user.id} value={user.id}>
+      {user.name}
+    </option>
+  ));
 
   return (
     <section>
@@ -50,6 +56,17 @@ const AddPostForm = () => {
           onChange={handleChange}
         />
 
+        <label htmlFor='postAuthor'>Author:</label>
+        <select
+          name='postAuthor'
+          id='postAuthor'
+          value={userId}
+          onChange={handleAuthorChange}
+        >
+          <option value=''></option>
+          {usersOptions}
+        </select>
+
         <label htmlFor='content'>Content:</label>
         <textarea
           name='content'
@@ -58,7 +75,9 @@ const AddPostForm = () => {
           onChange={handleChange}
         ></textarea>
 
-        <button type='submit'>Save</button>
+        <button type='submit' disabled={!canSave}>
+          Save
+        </button>
       </form>
     </section>
   );
